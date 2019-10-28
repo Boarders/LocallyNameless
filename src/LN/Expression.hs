@@ -1,18 +1,8 @@
-{-# LANGUAGE TypeFamilies    #-}
-{-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE DeriveFoldable #-}
-{-# LANGUAGE PolyKinds #-}
-{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE MagicHash #-}
-{-# LANGUAGE UnboxedTuples #-}
 
 module LN.Expression where
 
-import Data.Text (Text)
 import Data.Set (Set, singleton, delete)
 import Data.Map (Map, lookup, insert, mapKeysMonotonic)
 import qualified Data.Map as M
@@ -65,11 +55,11 @@ toLocallyNameless = go mempty
   where
     go :: Map a Int -> Term a -> Term (Var a)
     go env = \case
-      v@(Var a)  ->
+      Var a  ->
         case a `lookup` env of
           Just bv -> Var (B bv)
           Nothing -> Var (F a)
-      a@(App l r) -> App (go env l) (go env r)
+      App l r -> App (go env l) (go env r)
       Lam n e   ->
         let
           env' = insert n 0 (M.map (+ 1) env)
@@ -87,19 +77,22 @@ fromLocallyNameless = go mempty
           F a  -> Var a
           B bv -> case bv `lookup` env of
             Just name -> Var name
-            Nothing   -> error $ "Found bound variable with binding:" <> (show bv)
+            Nothing   -> error $ "Found bound variable :" <> show bv <> " without binder."
       App l r -> App (go env l) (go env r)
       Lam n e ->
         case n of
-          B bv -> error $ "Found unnamed variable at binding site" <> (show bv)
+          B bv -> error $ "Found unnamed variable at binding site :" <> show bv
           F v  ->
             let
               env' = insert 0 v (mapKeysMonotonic (+ 1) env)
             in
               Lam v (go env' e)
 
-alphaEq :: forall a. (Ord a) => Term a -> Term a -> Bool
-alphaEq l r = (toLocallyNameless l) == (toLocallyNameless r)
+alphaEq :: forall a . (Ord a) => Term a -> Term a -> Bool
+alphaEq l r = toLocallyNameless l == toLocallyNameless r
+
+(.==) :: forall a . (Ord a) => Term a -> Term a -> Bool
+(.==) = alphaEq
 
 -- |
 -- Open takes a term with an outer binder and instantiates that binder
@@ -111,11 +104,11 @@ open image = go 0
     go :: Int -> Term (Var a) -> Term (Var a)
     go outer =
       \case
-        Var v ->
-          case v of
+        Var fbv ->
+          case fbv of
             B bv | bv == outer -> image
                  | otherwise -> Var (B bv)
-            F v -> Var (F v)
+            F fv -> Var (F fv)
         App l r -> App (go outer l) (go outer r)
         Lam n b -> Lam n (go (outer + 1) b)
 
@@ -151,13 +144,13 @@ whnfLN term = go term []
   where
     go :: Term (Var a) -> [Term (Var a)] -> Term (Var a)
     go t as =
-      case (# t, as #) of
-        (# (App l r), args #)
+      case (t, as) of
+        (App l r, args)
           -> go l (r : args )
-        (# (Lam _ body) , a:args #)
+        (Lam _ body , a:args)
           -> go (substitute a body) args
-        (# lam, args #)
-          -> foldl' App lam as          
+        _
+          -> foldl' App t as
 
 
 whnf :: (Ord a) => Term a -> Term a
@@ -171,15 +164,15 @@ nfLN term = go term []
   where
     go :: Term (Var a) -> [Term (Var a)] -> Term (Var a)
     go t as =
-      case (# t, as #) of
-        (# (App l r), args #)
+      case (t, as) of
+        (App l r, args)
           -> go l (r : args)
-        (# (Lam n body) , [] #)
-          -> (Lam n (nfLN body))
-        (# (Lam _ body) , a:args #)
+        (Lam n body , [])
+          -> Lam n (nfLN body)
+        (Lam _ body , a:args)
           -> go (substitute a body) args
-        (# lam, args #)
-          -> foldl' App lam (fmap nfLN as)
+        _
+          -> foldl' App t (fmap nfLN as)
 
 
 nf :: (Ord a) => Term a -> Term a

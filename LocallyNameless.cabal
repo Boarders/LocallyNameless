@@ -68,6 +68,7 @@ Library Core
       LN.Expression
       LN.Parser
       LN.Church
+      LN.PrettyPrint
 
   default-language:
     Haskell2010
