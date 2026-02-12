@@ -32,12 +32,25 @@ fromNat Z = Lam "S" (Lam "Z" "Z")
 fromNat (S n) = Lam "S" (Lam "Z" ("S" .$ (nf $ fromNat n .$ "S" .$ "Z")))
 
 
+cZero :: Term Text
 cZero  = fromNat Z
+
+cOne :: Term Text
 cOne   = fromNat (S Z)
+
+cTwo :: Term Text
 cTwo   = fromNat (S (S Z))
+
+cThree :: Term Text
 cThree = fromNat (S (S (S Z)))
+
+cFour :: Term Text
 cFour  = fromNat (S (S (S (S Z))))
+
+cFive :: Term Text
 cFive  = fromNat (S (S (S (S (S Z)))))
+
+cSix :: Term Text
 cSix   = fromNat (S (S (S (S (S (S Z))))))
 
 
