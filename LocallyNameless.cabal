@@ -7,8 +7,6 @@ version:            0.1.0
 
 
 executable repl
-
-
   main-is:
     Main.hs
 
@@ -22,16 +20,12 @@ executable repl
       base
     , Core
     , ansi-terminal
-        ^>= 0.9.1
     , haskeline
-        ^>= 0.7.5.0
     , megaparsec
-        ^>= 7.0.5
     , text
-        ^>=1.2.3
     , transformers
-        ^>= 0.5.6.2
-
+    , prettyprinter-ansi-terminal
+    , prettyprinter
 
 
 Library Core
@@ -50,19 +44,12 @@ Library Core
   build-depends:
       base
     , containers
-        ^>= 0.6
     , megaparsec
-        ^>= 7.0.5
     , mtl
-        ^>= 2.2.2
     , text
-        ^>=1.2.3
     , megaparsec
-        ^>= 7.0.5
-   , QuickCheck
-        ^>= 2.13.2
-    , text
-        ^>=1.2.3
+    , QuickCheck
+    , prettyprinter
 
   exposed-modules:
       LN.Expression
@@ -92,12 +79,8 @@ test-suite test
       Core
     , base
     , QuickCheck
-        ^>= 2.13.2
     , tasty
-        ^>= 1.2.3
     , tasty-hunit
-        ^>= 0.10
     , tasty-quickcheck
-        ^>= 0.10
     , text
-        ^>=1.2.3
+    , containers
