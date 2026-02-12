@@ -35,7 +35,7 @@ fromLN (LN.Var n)    = UVar (string2Name n)
 fromLN (LN.Lam n e)  = ULam (bind (string2Name n) (fromLN e))
 fromLN (LN.App l r)  = UApp (fromLN l) (fromLN r)
 
--- Note: This conversion may produce alpha-variants. Always use LN.alphaEq for comparison!
+-- Note: This conversion may produce alpha-variants, use LN.alphaEq for comparison
 toLN :: UTerm -> LN.Term String
 toLN (UVar n)    = LN.Var (name2String n)
 toLN (ULam b)    = runFreshM $ do
