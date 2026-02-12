@@ -113,7 +113,7 @@ unitTests = testGroup "Unit Tests"
                 "LN and unbound should be alpha-equivalent (via aeq)"
       , HU.testCase
           "Naive non-capture avoiding substitutuion should disagree when comparing to unbound implementation" $
-           -- Classic variable capture example: (λx. λy. x) y should NOT reduce to λy. y
+           -- (λx. λy. x) y should not reduce to λy. y
            let term = App (Lam "x" (Lam "y" (Var "x"))) (Var "y")
                lnResult = nf term
                brokenResult = Eval.toLN (Eval.nfU_broken (Eval.fromLN term))
