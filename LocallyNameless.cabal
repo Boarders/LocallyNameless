@@ -26,6 +26,7 @@ executable repl
     , transformers
     , prettyprinter-ansi-terminal
     , prettyprinter
+    , mtl
 
 
 Library Core
@@ -50,6 +51,7 @@ Library Core
     , megaparsec
     , QuickCheck
     , prettyprinter
+    , prettyprinter-ansi-terminal
 
   exposed-modules:
       LN.Expression
