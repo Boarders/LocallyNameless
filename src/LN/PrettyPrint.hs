@@ -91,9 +91,9 @@ prettyPrec config boundVars prec term = case term of
     let (binders, body') = collectLambdas (Lam x body)
         boundVars' = foldr Set.insert boundVars binders
         lambdaSym = if useUnicode config then pretty ("λ" :: String) else pretty ("\\" :: String)
-        binderDocs = map (pretty . unquote . show) binders
+        binderDocs = map (colourBound . pretty . unquote . show) binders
         doc = colourLambda lambdaSym
-           <> hsep binderDocs
+           <+> hsep binderDocs
            <> colourLambda (pretty ("." :: String))
            <+> prettyPrec config boundVars' PrecLam body'
     in if prec > PrecLam
@@ -120,10 +120,10 @@ colourLambda :: Doc AnsiStyle -> Doc AnsiStyle
 colourLambda = annotate (color Magenta)
 
 colourBound :: Doc AnsiStyle -> Doc AnsiStyle
-colourBound = annotate (color Green)
+colourBound = annotate (bold <> color Green)
 
 colourFree :: Doc AnsiStyle -> Doc AnsiStyle
-colourFree = annotate (color Yellow)
+colourFree = annotate (color Red)
 
 colourParen :: Doc AnsiStyle -> Doc AnsiStyle
 colourParen = annotate (colorDull White)
