@@ -43,7 +43,6 @@ toLN (ULam b)    = runFreshM $ do
   return $ LN.Lam (name2String n) (toLN body)
 toLN (UApp l r)  = LN.App (toLN l) (toLN r)
 
--- Helper to get free variable names from a UTerm
 freeVarsU :: UTerm -> [Name UTerm]
 freeVarsU (UVar n) = [n]
 freeVarsU (UApp l r) = freeVarsU l ++ freeVarsU r
@@ -51,7 +50,6 @@ freeVarsU (ULam b) = runFreshM $ do
   (n, body) <- unbind b
   return $ filter (/= n) (freeVarsU body)
 
--- | Weak head normal form using unbound-generics with proper capture avoidance
 whnfU :: UTerm -> UTerm
 whnfU term = runFreshM $ go 0 term []
   where
@@ -75,7 +73,6 @@ whnfU term = runFreshM $ go 0 term []
           _ ->
             return $ foldl UApp t as
 
--- | Normal form using unbound-generics with proper capture avoidance
 nfU :: UTerm -> UTerm
 nfU term = runFreshM $ go 0 term []
   where
@@ -104,12 +101,11 @@ nfU term = runFreshM $ go 0 term []
             as' <- mapM (\a -> go 0 a []) as
             return $ foldl UApp t as'
 
--- | Check alpha equivalence using unbound-generics
 aeqU :: UTerm -> UTerm -> Bool
 aeqU = aeq
 
--- | BROKEN: Naive substitution without capture avoidance (for testing)
--- This deliberately does NOT avoid variable capture
+-- | Incorrect non-capture avoiding substitution to check the above
+-- test comparison test does something
 naiveSubst :: Name UTerm -> UTerm -> UTerm -> UTerm
 naiveSubst x s (UVar y)
   | y == x    = s
@@ -117,10 +113,9 @@ naiveSubst x s (UVar y)
 naiveSubst x s (UApp t1 t2) = UApp (naiveSubst x s t1) (naiveSubst x s t2)
 naiveSubst x s (ULam b) = runFreshM $ do
   (y, body) <- unbind b
-  -- WRONG: doesn't check if y is free in s, allowing capture!
+  -- doesn't check if y is free in s
   return $ ULam (bind y (naiveSubst x s body))
 
--- | BROKEN: Normal form using naive substitution (should fail tests)
 nfU_broken :: UTerm -> UTerm
 nfU_broken term = go 0 term []
   where
@@ -136,7 +131,6 @@ nfU_broken term = go 0 term []
               (n, body) <- unbind b
               return $ ULam (bind n (nfU_broken body))
           (ULam b, a:args) ->
-            -- WRONG: using naive substitution instead of proper subst
             let body' = runFreshM $ do
                   (n, body) <- unbind b
                   return $ naiveSubst n a body
@@ -144,10 +138,9 @@ nfU_broken term = go 0 term []
           _ ->
             foldl UApp t (map nfU_broken as)
 
--- | Property: nf agrees with nfU up to alpha equivalence
 prop_nf_agrees :: LN.Term String -> Property
 prop_nf_agrees term =
-  -- Only test on valid terms (those that roundtrip properly)
+  -- Only test on valid terms
   let term' = (LN.fromLocallyNameless . LN.toLocallyNameless) term
   in term == term' ==>
     let lnResult = LN.nf term
@@ -165,7 +158,6 @@ prop_nf_agrees term =
          "U  alpha eq: " ++ show agrees)
         (LN.alphaEq lnResult uResult && agrees)
 
--- | Property: whnf agrees with whnfU up to alpha equivalence
 prop_whnf_agrees :: LN.Term String -> Property
 prop_whnf_agrees term =
   let term' = (LN.fromLocallyNameless . LN.toLocallyNameless) term
